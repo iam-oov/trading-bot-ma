@@ -13,9 +13,13 @@ Un sistema de alertas de trading para el mercado de futuros de Binance, diseñad
 - 🌐 Interfaz web para visualización de datos
 - 🔔 Alertas sonoras para nuevas señales
 
+## Screenshot
+
+![Screenshot del Bot](public/img/screen.png)
+
 ## Requisitos previos
 
-- Python 3.11+
+- Python 3.13+
 - (Opcional) Claves de API de Binance (API key y Secret key)
 
 ## Instalación
