@@ -53,8 +53,6 @@ Un sistema de alertas de trading para el mercado de futuros de Binance, diseñad
 
 4. Iniciar la interfaz web
 
-   Para iniciar el servidor web de monitoreo:
-
    ```
    python runner.py
    ```
