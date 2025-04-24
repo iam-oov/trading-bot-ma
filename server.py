@@ -1,12 +1,12 @@
 # server.py
 import config
-import json
 import os
 import sys
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, send_from_directory, request
+
 import eventlet
-eventlet.monkey_patch()  # Important: Patch standard libraries for eventlet
+eventlet.monkey_patch()
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -42,8 +42,6 @@ socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")
 # --- Store last known state ---
 last_stats = {"message": "Esperando estadísticas del bot..."}
 last_active_ops = []  # Store list of active operations
-
-# --- Routes ---
 
 
 @app.route('/')
@@ -105,8 +103,6 @@ def handle_web_disconnect():
     client_sid = request.sid
     logger.log_message(f'Web client disconnected: {client_sid}')
 
-# Handler for logs
-
 
 @socketio.on('log_from_script')
 def handle_log_from_script(data):
@@ -115,8 +111,6 @@ def handle_log_from_script(data):
     color_style = data.get('color', 'color: black;')
     log_data_for_web = {'message': message, 'color': color_style}
     emit('new_log', log_data_for_web, broadcast=True)
-
-# Handler for stats
 
 
 @socketio.on('stats_from_script')
@@ -137,18 +131,15 @@ def handle_active_ops_from_script(data):
     global last_active_ops
     if isinstance(data, list):
         last_active_ops = data  # Update last known list
-        # Broadcast the new list
         emit('active_ops_update', data, broadcast=True)
     else:
         logger.log_message(
             f"Received invalid active ops data format from script: {type(data)}", "RED")
 
 
-# --- Main Execution ---
 if __name__ == '__main__':
     print("-----------------------------------------------------")
     print("Starting Flask-SocketIO server...")
-    # ... (rest of the startup messages) ...
     print("-----------------------------------------------------")
     print("Server accessible at http://127.0.0.1:5000")
     print("-----------------------------------------------------")
