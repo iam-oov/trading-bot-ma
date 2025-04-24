@@ -51,6 +51,16 @@ Un sistema de alertas de trading para el mercado de futuros de Binance, diseñad
    BINANCE_API_SECRET = 'tu_api_secret'
    ```
 
+4. Iniciar la interfaz web
+
+   Para iniciar el servidor web de monitoreo:
+
+   ```
+   python runner.py
+   ```
+
+   Luego accede a la interfaz en tu navegador: http://127.0.0.1:5000
+
 ## Configuración
 
 El bot se configura a través de módulos de constantes en la carpeta `constants/`:
@@ -65,18 +75,6 @@ Parámetros de trading configurables:
 - `VARIATION_PERCENTAGE`: Porcentaje de variación para entrar en operaciones
 - `VARIATION_100K_PERCENTAGE`: Porcentaje de variación para operaciones con alto volumen
 - `VARIATION_FAST_PERCENTAGE`: Porcentaje para operaciones FAST_SHORT
-
-## Uso
-
-### Iniciar la interfaz web
-
-Para iniciar el servidor web de monitoreo:
-
-```
-python runner.py
-```
-
-Luego accede a la interfaz en tu navegador: http://127.0.0.1:5000
 
 ## Cómo funciona
 
