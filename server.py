@@ -1,13 +1,13 @@
 # server.py
-import eventlet
-eventlet.monkey_patch() # Important: Patch standard libraries for eventlet
-
-from flask import Flask, render_template, send_from_directory, request
-from flask_socketio import SocketIO, emit
-import sys
-import os
-import json
 import config
+import json
+import os
+import sys
+from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, send_from_directory, request
+import eventlet
+eventlet.monkey_patch()  # Important: Patch standard libraries for eventlet
+
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,32 +23,39 @@ except Exception as e:
 
 
 # --- Flask App Setup ---
-template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
+template_dir = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), 'templates'))
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'static'))
 
 if not os.path.exists(os.path.join(template_dir, 'index.html')):
-    print(f"Error: Template file 'index.html' not found in '{template_dir}'", file=sys.stderr)
+    print(
+        f"Error: Template file 'index.html' not found in '{template_dir}'", file=sys.stderr)
     sys.exit(1)
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'a_default_secret_key_for_dev!')
+app.config['SECRET_KEY'] = os.environ.get(
+    'FLASK_SECRET_KEY', 'a_default_secret_key_for_dev!')
 
 # --- SocketIO Setup ---
 socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")
 
 # --- Store last known state ---
 last_stats = {"message": "Esperando estadísticas del bot..."}
-last_active_ops = [] # Store list of active operations
+last_active_ops = []  # Store list of active operations
 
 # --- Routes ---
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 @app.route('/static/<path:filename>')
 def static_files(filename):
     if not os.path.isdir(app.static_folder):
-        print(f"Error: Static folder '{app.static_folder}' not found.", file=sys.stderr)
+        print(
+            f"Error: Static folder '{app.static_folder}' not found.", file=sys.stderr)
         return "Static folder not found", 404
     if '..' in filename or filename.startswith('/'):
         return "Invalid path", 400
@@ -76,7 +83,8 @@ def handle_web_connect():
         # Send existing logs
         existing_logs = logger.get_all_logs_for_web()
         for msg, color_style in existing_logs:
-            emit('new_log', {'message': msg, 'color': color_style}, room=client_sid)
+            emit('new_log', {'message': msg,
+                 'color': color_style}, room=client_sid)
 
         # Send last known stats
         if last_stats:
@@ -87,7 +95,8 @@ def handle_web_connect():
             emit('active_ops_update', last_active_ops, room=client_sid)
 
     except Exception as e:
-        logger.log_message(f"Error getting or sending existing data to {client_sid}: {e}", "RED")
+        logger.log_message(
+            f"Error getting or sending existing data to {client_sid}: {e}", "RED")
 
 
 @socketio.on('disconnect')
@@ -97,6 +106,8 @@ def handle_web_disconnect():
     logger.log_message(f'Web client disconnected: {client_sid}')
 
 # Handler for logs
+
+
 @socketio.on('log_from_script')
 def handle_log_from_script(data):
     """Receives logs from bot and relays to browsers."""
@@ -106,6 +117,8 @@ def handle_log_from_script(data):
     emit('new_log', log_data_for_web, broadcast=True)
 
 # Handler for stats
+
+
 @socketio.on('stats_from_script')
 def handle_stats_from_script(data):
     """Receives statistics from bot and relays to browsers."""
@@ -114,17 +127,21 @@ def handle_stats_from_script(data):
         last_stats = data
         emit('stats_update', data, broadcast=True)
     else:
-        logger.log_message(f"Received invalid stats data format from script: {type(data)}", "RED")
+        logger.log_message(
+            f"Received invalid stats data format from script: {type(data)}", "RED")
+
 
 @socketio.on('active_ops_from_script')
 def handle_active_ops_from_script(data):
     """Receives active operations list from bot and relays to browsers."""
     global last_active_ops
     if isinstance(data, list):
-        last_active_ops = data # Update last known list
-        emit('active_ops_update', data, broadcast=True) # Broadcast the new list
+        last_active_ops = data  # Update last known list
+        # Broadcast the new list
+        emit('active_ops_update', data, broadcast=True)
     else:
-        logger.log_message(f"Received invalid active ops data format from script: {type(data)}", "RED")
+        logger.log_message(
+            f"Received invalid active ops data format from script: {type(data)}", "RED")
 
 
 # --- Main Execution ---
@@ -133,10 +150,11 @@ if __name__ == '__main__':
     print("Starting Flask-SocketIO server...")
     # ... (rest of the startup messages) ...
     print("-----------------------------------------------------")
-    print("Server accessible at http://127.0.0.1:5000 (or your local IP)")
+    print("Server accessible at http://127.0.0.1:5000")
     print("-----------------------------------------------------")
     try:
-        socketio.run(app, host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+        socketio.run(app, host='0.0.0.0', port=5000,
+                     debug=False, use_reloader=False)
     except Exception as e:
         print(f"Failed to start server: {e}", file=sys.stderr)
         sys.exit(1)
