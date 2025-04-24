@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot Dashboard</title>
+    <style>
+        :root {
+            --sidebar-width: 300px;
+            --active-ops-width: 300px;
+            --bg-color: #f4f4f4;
+            --text-color: #333;
+            --sidebar-bg: #333;
+            --sidebar-text: #fff;
+            --container-bg: #fff;
+            --border-color: #ddd;
+            --green-accent: #a0ffa0;
+            --red-accent: #ffa0a0;
+        }
+        body {
+            font-family: sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        #sidebar h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        .config-container {
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        .config-container div {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #444;
+            border-radius: 4px;
+        }
+        .config-container span {
+            font-weight: bold;
+            float: right;
+            color: var(--green-accent);
+        }
+        .config-container #efficiency {
+            font-size: 1.1em;
+            background-color: #555;
+        }
+        .config-container #efficiency span {
+            color: var(--sidebar-text);
+        }
+        #stat-timestamp {
+            font-size: 0.8em;
+            text-align: center;
+            margin-top: 15px;
+            color: #ccc;
+        }
+
+        #main-content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 300px;
+        }
+        #main-content h1 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #555;
+            font-size: 1.5em;
+        }
+        #logs-container {
+            flex-grow: 1;
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 15px;
+            overflow-y: scroll;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        }
+        #logs-container div {
+            margin-bottom: 5px;
+            padding: 3px 5px;
+            font-size: 0.85em;
+            border-bottom: 1px solid #eee;
+            word-wrap: break-word;
+        }
+        #logs-container div:last-child {
+            border-bottom: none;
+        }
+
+        #active-ops-column {
+            width: var(--active-ops-width);
+            flex-shrink: 0;
+            background-color: #e9e9e9;
+            padding: 20px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        #active-ops-column h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            text-align: center;
+            color: #555;
+            font-size: 1.2em;
+        }
+        #active-ops-container {
+            margin-top: 15px;
+            font-size: 0.85em;
+        }
+        .active-op-item {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+        }
+        .active-op-item .ticker {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .active-op-item .ticker .emoji {
+            margin-right: 5px;
+        }
+        .active-op-item .details {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .active-op-item .details span {
+            display: block;
+            margin-bottom: 3px;
+        }
+        .active-op-item .difference {
+            font-weight: bold;
+            margin-top: 5px;
+            display: block;
+        }
+        .diff-positive { color: green; }
+        .diff-negative { color: red; }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; overflow: auto; }
+            #sidebar, #active-ops-column { width: 100%; height: auto; max-height: 30vh; box-shadow: none; border-bottom: 1px solid var(--border-color); }
+            #main-content { min-width: unset; height: auto; order: 1; }
+            #sidebar { order: 0; }
+            #active-ops-column { order: 2; }
+            #logs-container { height: 50vh; }
+        }
+
+    </style>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div id="sidebar">
+        <div>
+            <h2>Estadísticas</h2>
+            <div class="config-container">
+                <div id="stat-pin">PIN: <span id="pin-value">N/A</span></div>
+                <div id="stat-inprogress">En Progreso: <span id="inprogress-value">0</span></div>
+                <div id="stat-wins">Ganadas: <span id="wins-value">0</span></div>
+                <div id="stat-losses">Perdidas: <span id="losses-value">0</span></div>
+                <div id="stat-total">Total Finalizadas: <span id="total-value">0</span></div>
+                <div id="efficiency">Eficiencia: <span id="efficiency-value">0.00%</span></div>
+                <div id="stat-timestamp">
+                    Última act: <span id="timestamp-value">Nunca</span>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 25px;">
+            <h2>Configuración del Bot</h2>
+            <div class="config-container">
+                <div id="config-sl">SL: <span id="sl-value">N/A</span></div>
+                <div id="config-tp">TP: <span id="tp-value">0</span></div>
+                <div id="config-variation-fast">FAST: <span id="variation-fast-value">0</span></div>
+                <div id="config-variation-normal">NORMAL: <span id="variation-normal-value">0</span></div>
+            </div>
+        </div>
+        <div style="margin-top: 25px;">
+            <h2>Configuración de Negocio</h2>
+            <div class="config-container">
+                <div id="config-max-oper">Operaciones concurrentes: <span id="max-oper-value">N/A</span></div>
+                <div id="config-evaluation-time">Segundos del ciclo de evaluación: <span id="evaluation-time-value">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <h1>Registro del Bot</h1>
+        <div id="logs-container">
+            <div>Esperando conexión con el servidor...</div>
+        </div>
+    </div>
+
+    <div id="active-ops-column">
+        <h2>Operaciones Activas</h2>
+        <div id="active-ops-container">
+            <div>Esperando datos del bot...</div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        const logsContainer = document.getElementById('logs-container');
+        const maxLogMessages = 500;
+
+        // Stats elements
+        const pinValueEl = document.getElementById('pin-value');
+        const inprogressValueEl = document.getElementById('inprogress-value');
+        const winsValueEl = document.getElementById('wins-value');
+        const lossesValueEl = document.getElementById('losses-value');
+        const totalValueEl = document.getElementById('total-value');
+        const efficiencyValueEl = document.getElementById('efficiency-value');
+        const timestampValueEl = document.getElementById('timestamp-value');
+        const slValueEl = document.getElementById('sl-value');
+        const tpValueEl = document.getElementById('tp-value');
+        const variationFastValueEl = document.getElementById('variation-fast-value');
+        const variationNormalValueEl = document.getElementById('variation-normal-value');
+        const maxOperValueEl = document.getElementById('max-oper-value');
+        const evaluationTimeValueEl = document.getElementById('evaluation-time-value');
+
+        // Active operations container
+        const activeOpsContainer = document.getElementById('active-ops-container');
+
+        socket.on('connect', () => {
+            const initialMsg = logsContainer.querySelector('div');
+            if (initialMsg && initialMsg.textContent.includes('Esperando conexión')) {
+                logsContainer.innerHTML = '';
+            }
+            logsContainer.insertAdjacentHTML('afterbegin', `<div style="color: green; font-weight: bold;">Conectado al servidor. Esperando logs...</div>`);
+            // Clear initial messages in other columns too
+            const initialOpsMsg = activeOpsContainer.querySelector('div');
+            if (initialOpsMsg && initialOpsMsg.textContent.includes('Esperando datos')) {
+                activeOpsContainer.innerHTML = '';
+            }
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Desconectado del servidor Socket.IO');
+            logsContainer.insertAdjacentHTML('afterbegin', `<div style="color: red; font-weight: bold;">Desconectado del servidor. Intentando reconectar...</div>`);
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Error de conexión Socket.IO:', err);
+        });
+
+        // Handle Global Config
+        socket.on('global_config', (config) => {
+            console.log('Configuración global recibida:', config);
+            
+            const trading_params = config.trading_params;
+            const business_params = config.business_params;
+
+            if (trading_params && typeof trading_params === 'object') {
+                slValueEl.textContent = `${trading_params.STOP_LOSS_PERCENTAGE}%` || '/A';
+                tpValueEl.textContent = `${trading_params.TAKE_PROFIT_PERCENTAGE}%` || '0';
+                variationFastValueEl.textContent = `${trading_params.VARIATION_FAST_PERCENTAGE}%` || '0';
+                variationNormalValueEl.textContent = `${trading_params.VARIATION_PERCENTAGE}%` || '0';
+            } else if (trading_params && trading_params.message) {
+                logsContainer.insertAdjacentHTML('afterbegin', `<div style="color: orange;">${config.message}</div>`);
+            }
+
+            if (business_params && typeof business_params === 'object') {
+                maxOperValueEl.textContent = `${business_params.MAX_CONCURRENT_OPERATIONS}` || 'N/A';
+                evaluationTimeValueEl.textContent = `${business_params.EVALUATION_CYCLE_TIME}s` || '0';
+            } else if (business_params && business_params.message) {
+                logsContainer.insertAdjacentHTML('afterbegin', `<div style="color: orange;">${config.message}</div>`);
+            }
+        });
+
+        // Handle Logs
+        socket.on('new_log', (data) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = data.color || 'color: black;';
+            messageDiv.textContent = data.message;
+            logsContainer.prepend(messageDiv);
+            while (logsContainer.children.length > maxLogMessages) {
+                logsContainer.removeChild(logsContainer.lastChild);
+            }
+        });
+
+        // Handle Stats Updates
+        socket.on('stats_update', (stats) => {
+            if (stats && typeof stats === 'object') {
+                pinValueEl.textContent = stats.pin || 'N/A';
+                inprogressValueEl.textContent = stats.in_progress !== undefined ? stats.in_progress : '0';
+                winsValueEl.textContent = stats.wins !== undefined ? stats.wins : '0';
+                lossesValueEl.textContent = stats.losses !== undefined ? stats.losses : '0';
+                totalValueEl.textContent = stats.total_finished !== undefined ? stats.total_finished : '0';
+                efficiencyValueEl.textContent = stats.efficiency || '0.00%';
+                timestampValueEl.textContent = stats.timestamp || 'N/A';
+
+                const efficiencyNum = parseFloat(stats.efficiency);
+                if (!isNaN(efficiencyNum)) {
+                    if (efficiencyNum >= 75) efficiencyValueEl.style.color = '#4CAF50';
+                    else if (efficiencyNum >= 50) efficiencyValueEl.style.color = '#FFEB3B';
+                    else efficiencyValueEl.style.color = '#F44336';
+                } else {
+                    efficiencyValueEl.style.color = '#fff';
+                }
+            } else if (stats && stats.message) {
+                timestampValueEl.textContent = stats.message;
+            }
+        });
+
+        // --- Handle Active Operations Updates ---
+        socket.on('active_ops_update', (activeOps) => {
+            activeOpsContainer.innerHTML = ''; // Clear previous list
+
+            if (activeOps && activeOps.length > 0) {
+                activeOps.forEach(op => {
+                    const opDiv = document.createElement('div');
+                    opDiv.classList.add('active-op-item');
+
+                    // Determine color for difference
+                    const diffClass = op.difference_raw >= 0 ? 'diff-positive' : 'diff-negative';
+
+                    opDiv.innerHTML = `
+                        <span class="ticker">
+                            <span class="emoji">${op.type_emoji || '?'}</span>
+                            ${op.tick} (${op.type_name || 'N/A'})
+                        </span>
+                        <div class="details">
+                            <span>Fecha: ${op.start_time || 'N/A'}</span>
+                            <span>Entrada: ${op.entry_price || 'N/A'}</span>
+                            <span>TP: ${op.tp || 'N/A'}</span>
+                            <span>SL: ${op.sl || 'N/A'}</span>
+                            <span class="difference ${diffClass}">Dif: ${op.difference || '0.00%'}</span>
+                        </div>
+                    `;
+                    activeOpsContainer.appendChild(opDiv);
+                });
+            } else {
+                activeOpsContainer.innerHTML = '<div>No hay operaciones activas.</div>';
+            }
+        });
+
+    </script>
+</body>
+</html>
