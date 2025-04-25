@@ -1,0 +1,9 @@
+[project]
+name = "trading-bot-ma"
+version = "0.1.0"
+description = "Bot de trading automatico para Binance"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "websockets>=15.0.1",
+]
