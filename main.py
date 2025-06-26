@@ -6,7 +6,7 @@ import time
 
 def main():
     # Puedes cambiar 'bybit' por 'binance' para cambiar el proveedor de datos
-    alarm_evaluator = configure_app(exchange_to_use='bybit')
+    alarm_evaluator = configure_app()
 
     # Ejemplo de configuración de una alarma (esto podría venir de una DB o un archivo)
     my_alarm_config = {
