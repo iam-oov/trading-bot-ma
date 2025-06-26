@@ -2,6 +2,9 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,django
 
 log/
+data/
+checkpoints/
+futures_data_1m_*/
 
 ### Django ###
 *.log

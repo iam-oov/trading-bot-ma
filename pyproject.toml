@@ -1,9 +1,21 @@
 [project]
 name = "trading-bot-ma"
 version = "0.1.0"
-description = "Bot de trading automatico para Binance"
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
-    "websockets>=15.0.1",
+    "colorama>=0.4.6",
+    "numpy==1.26.4",
+    "pandas>=2.2.3",
+    "pandas-ta==0.3.14b0",
+    "plotly>=6.0.1",
+    "pygame>=2.6.1",
+    "python-binance>=1.0.28",
+    "setuptools>=80.0.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "refactor_v2",
 ]
